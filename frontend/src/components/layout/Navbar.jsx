@@ -29,7 +29,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
     if (path === '/chat') return 'Chat AI';
     if (path === '/profile') return 'Profilo';
     if (path === '/settings') return 'Impostazioni';
-    return 'BROWAY-AI';
+    return 'AION';
   };
 
   return (
@@ -52,7 +52,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold gradient-text tracking-tight">BROWAY-AI</h1>
+              <h1 className="text-xl font-bold gradient-text tracking-tight">AION</h1>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 -mt-0.5">Enterprise Platform</p>
             </div>
           </Link>

@@ -1,8 +1,8 @@
-# Design Tecnico — BROWAY-AI v2.0
+# Design Tecnico — AION v2.0
 
 ## Overview
 
-BROWAY-AI v2.0 estende la piattaforma esistente (FastAPI + SQLite/SQLAlchemy async + React 19 + Vite + Tailwind)
+AION v2.0 estende la piattaforma esistente (FastAPI + SQLite/SQLAlchemy async + React 19 + Vite + Tailwind)
 con dieci aree di miglioramento. L'architettura rimane monolitica (un backend, un frontend) per semplicità
 operativa, ma introduce nuovi modelli DB, nuovi route file, e nuovi componenti React.
 

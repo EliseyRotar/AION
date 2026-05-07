@@ -1,5 +1,5 @@
 """
-Test configuration and fixtures for BROWAY-AI v2.0
+Test configuration and fixtures for AION v2.0
 
 This module provides:
 - Async test client with in-memory SQLite database

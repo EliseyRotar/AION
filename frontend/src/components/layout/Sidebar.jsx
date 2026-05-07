@@ -108,7 +108,7 @@ export default function Sidebar({ isOpen, onClose }) {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-600 to-purple-600 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold gradient-text">BROWAY-AI</span>
+            <span className="font-bold gradient-text">AION</span>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
             <X size={20} />
@@ -204,7 +204,7 @@ export default function Sidebar({ isOpen, onClose }) {
         {/* Version badge */}
         <div className="p-4 border-t border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
-            <span>BROWAY-AI</span>
+            <span>AION</span>
             <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-full">v1.0.0</span>
           </div>
         </div>

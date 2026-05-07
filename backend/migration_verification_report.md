@@ -1,4 +1,4 @@
-# Migration Verification Report - Task 2.2
+ # Migration Verification Report - Task 2.2
 
 ## Migration: `001_v2_new_tables`
 

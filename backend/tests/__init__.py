@@ -1,5 +1,5 @@
 """
-BROWAY-AI v2.0 Test Suite
+AION v2.0 Test Suite
 
 This package contains all tests for the AI Hub platform:
 - Unit tests for models, authentication, and business logic

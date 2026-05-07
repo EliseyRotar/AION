@@ -1,4 +1,4 @@
-# Piano di Implementazione — BROWAY-AI v2.0
+# Piano di Implementazione — AION v2.0
 
 ## Overview
 

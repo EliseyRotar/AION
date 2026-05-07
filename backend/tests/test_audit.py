@@ -1,5 +1,5 @@
 """
-Property-based tests for audit log functionality in BROWAY-AI v2.0
+Property-based tests for audit log functionality in AION v2.0
 
 Feature: ai-hub-v2
 Tests:

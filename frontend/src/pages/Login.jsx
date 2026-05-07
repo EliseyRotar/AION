@@ -68,7 +68,7 @@ export default function Login() {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-600 via-purple-600 to-pink-600 shadow-2xl shadow-primary-500/30 mb-6 hover:scale-110 transition-transform duration-300">
               <Sparkles className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-3xl font-bold gradient-text mb-2">BROWAY-AI</h1>
+            <h1 className="text-3xl font-bold gradient-text mb-2">AION</h1>
             <p className="text-slate-500 dark:text-slate-400">Enterprise AI Platform</p>
           </div>
 
@@ -201,7 +201,7 @@ export default function Login() {
           
           {/* Footer */}
           <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-6">
-            © 2026 BROWAY-AI • Tutti i diritti riservati
+            © 2026 AION • Tutti i diritti riservati
           </p>
         </div>
       </div>

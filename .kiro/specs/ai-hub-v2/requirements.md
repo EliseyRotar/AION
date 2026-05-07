@@ -1,8 +1,8 @@
-# Documento dei Requisiti — BROWAY-AI v2.0
+# Documento dei Requisiti — AION v2.0
 
 ## Introduzione
 
-BROWAY-AI v2.0 è un aggiornamento maggiore della piattaforma enterprise AI esistente.
+AION v2.0 è un aggiornamento maggiore della piattaforma enterprise AI esistente.
 L'obiettivo è colmare le lacune operative identificate nella v1.0 aggiungendo audit log,
 analytics di utilizzo, gestione avanzata dei documenti, miglioramenti agli agenti,
 funzionalità self-service per gli utenti, export delle conversazioni, UX admin migliorata,
@@ -12,7 +12,7 @@ chat mobile-responsive, health check di sistema e gestione sicura dei token JWT.
 
 ## Glossario
 
-- **System**: la piattaforma BROWAY-AI nel suo insieme (backend FastAPI + frontend React)
+- **System**: la piattaforma AION nel suo insieme (backend FastAPI + frontend React)
 - **Admin**: utente con ruolo `admin`, ha accesso completo alla gestione della piattaforma
 - **User**: utente con ruolo `user`, accede solo agli agenti e alle conversazioni assegnate
 - **Agent**: assistente AI configurabile con system prompt, documenti RAG e parametri LLM

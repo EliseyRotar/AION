@@ -1,5 +1,5 @@
 """
-Audit logging helper functions for BROWAY-AI v2.0
+Audit logging helper functions for AION v2.0
 
 This module provides utilities for creating audit log entries that track
 administrative actions across the system.

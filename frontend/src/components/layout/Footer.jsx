@@ -36,7 +36,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-            © {currentYear} BROWAY-AI. Sviluppato con 
+            © {currentYear} AION. Sviluppato con 
             <Heart size={14} className="text-red-500 fill-red-500 animate-pulse" /> 
             in Italia
           </p>

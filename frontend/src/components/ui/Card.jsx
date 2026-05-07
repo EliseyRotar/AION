@@ -1,34 +1,32 @@
-export default function Card({ children, className = "", hover = false, glass = false }) {
-  const baseClass = glass 
-    ? "glass rounded-2xl p-6" 
-    : "card p-6";
-    
-  const hoverClass = hover ? "card-hover" : "";
-  
+export default function Card({ children, className = '', hover = false, glass = false }) {
+  const base = glass
+    ? 'bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6'
+    : 'bg-[#13162a] border border-white/5 rounded-2xl p-6';
+
   return (
-    <div className={`${baseClass} ${hoverClass} ${className}`}>
+    <div className={`${base} ${hover ? 'hover:border-violet-500/20 hover:-translate-y-0.5 transition-all duration-300' : ''} ${className}`}>
       {children}
     </div>
   );
 }
 
-export function CardHeader({ children, className = "" }) {
+export function CardHeader({ children, className = '' }) {
   return (
-    <div className={`pb-4 border-b border-slate-200 dark:border-slate-800 ${className}`}>
+    <div className={`pb-4 border-b border-white/5 ${className}`}>
       {children}
     </div>
   );
 }
 
-export function CardTitle({ children, className = "" }) {
+export function CardTitle({ children, className = '' }) {
   return (
-    <h3 className={`text-lg font-bold text-slate-900 dark:text-white ${className}`}>
+    <h3 className={`text-base font-semibold text-slate-200 ${className}`}>
       {children}
     </h3>
   );
 }
 
-export function CardContent({ children, className = "" }) {
+export function CardContent({ children, className = '' }) {
   return (
     <div className={`pt-4 ${className}`}>
       {children}

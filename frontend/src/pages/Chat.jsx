@@ -43,39 +43,35 @@ const Message = ({ msg }) => {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} group`}>
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold mr-2 mt-1 flex-shrink-0">
-          AI
+        <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center mr-2 mt-1 flex-shrink-0 bg-violet-500/10 border border-violet-500/20 p-1.5">
+          <img src="/logo.png" alt="AI" className="w-full h-full object-contain" />
         </div>
       )}
-      <div className={`max-w-[75%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-        <div className={`rounded-2xl px-4 py-3 ${
+      <div className={`max-w-[75%] flex flex-col gap-1 ${isUser ? 'items-end' : 'items-start'}`}>
+        <div className={`rounded-2xl px-4 py-3 text-sm ${
           isUser
-            ? 'bg-primary-500 text-white rounded-br-sm shadow-md'
-            : 'bg-white dark:bg-gray-800 rounded-bl-sm shadow-sm border border-gray-100 dark:border-gray-700'
+            ? 'bg-gradient-to-br from-violet-600 to-purple-600 text-white rounded-br-sm shadow-lg shadow-violet-500/20'
+            : 'bg-slate-100 dark:bg-[#13162a] border border-slate-200 dark:border-white/5 text-slate-800 dark:text-slate-300 rounded-bl-sm'
         }`}>
           {isStreaming && !msg.content ? (
             <TypingDots />
           ) : (
-            <div className={`prose prose-sm max-w-none leading-relaxed ${
-              isUser ? 'prose-invert' : 'dark:prose-invert'
-            }`}>
+            <div className={`prose prose-sm max-w-none leading-relaxed ${isUser ? 'prose-invert' : 'prose-chat'}`}>
               <ReactMarkdown>{msg.content}</ReactMarkdown>
-              {isStreaming && <span className="inline-block w-0.5 h-4 bg-primary-400 animate-pulse ml-0.5 align-middle" />}
+              {isStreaming && <span className="inline-block w-0.5 h-4 bg-violet-400 animate-pulse ml-0.5 align-middle" />}
             </div>
           )}
         </div>
 
-        {/* Sources */}
         {!isUser && msg.sources?.length > 0 && !isStreaming && (
           <div className="flex flex-wrap gap-1 px-1">
             {msg.sources.map((s, i) => <SourceBadge key={i} source={s} />)}
           </div>
         )}
 
-        {/* Confidence */}
         {!isUser && msg.confidence && !isStreaming && (
           <div className="px-1">
-            <span className="text-xs text-gray-400">
+            <span className="text-[10px] text-slate-700">
               {msg.from_documents ? '📚 Da documenti · ' : ''}
               {msg.confidence.toFixed(0)}% confidence
             </span>
@@ -261,43 +257,43 @@ export default function Chat() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="h-screen flex bg-gray-50 dark:bg-gray-950 overflow-hidden">
+    <div className="min-h-screen flex bg-slate-100 dark:bg-[#0c0e1a]">
 
       {/* SIDEBAR */}
-      <div className="w-72 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col flex-shrink-0">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+      <div className="w-64 bg-slate-50 dark:bg-[#0c0e1a] border-r border-slate-200 dark:border-white/5 flex flex-col flex-shrink-0">
+        <div className="p-4 border-b border-slate-200 dark:border-white/5">
           <Link
             to={isAdmin ? '/dashboard' : '/user-dashboard'}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-4 transition-colors"
+            className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-600 hover:text-slate-700 dark:hover:text-slate-300 mb-4 transition-colors"
           >
-            <ArrowLeft size={16} /> Indietro
+            <ArrowLeft size={14} /> Indietro
           </Link>
-          <h2 className="font-bold text-base">💬 Chat AI</h2>
+          <h2 className="font-bold text-sm text-slate-700 dark:text-slate-300">Chat AI</h2>
         </div>
 
         {/* Agents */}
-        <div className="p-3 border-b border-gray-200 dark:border-gray-800">
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 px-1">Agenti</p>
+        <div className="p-3 border-b border-slate-200 dark:border-white/5">
+          <p className="text-[10px] text-slate-400 dark:text-slate-700 uppercase tracking-widest mb-2 px-1 font-bold">Agenti</p>
           {initialLoad ? (
             <div className="space-y-2">
-              {[1,2].map(i => <div key={i} className="h-12 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}
+              {[1,2].map(i => <div key={i} className="h-11 rounded-xl skeleton" />)}
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {agents.map(agent => (
                 <button
                   key={agent.id}
                   onClick={() => selectAgent(agent)}
-                  className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all ${
+                  className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-all ${
                     selectedAgent?.id === agent.id
-                      ? 'bg-primary-50 dark:bg-primary-900/30 ring-1 ring-primary-300 dark:ring-primary-700'
-                      : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'bg-violet-100 dark:bg-violet-500/15 text-violet-700 dark:text-violet-300'
+                      : 'text-slate-600 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
                   }`}
                 >
-                  <span className="text-xl flex-shrink-0">{agent.avatar_emoji}</span>
+                  <span className="text-lg flex-shrink-0">{agent.avatar_emoji}</span>
                   <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{agent.name}</p>
-                    <p className="text-xs text-gray-400 truncate">{agent.description}</p>
+                    <p className="font-medium text-xs truncate">{agent.name}</p>
+                    <p className="text-[10px] text-slate-700 truncate">{agent.description}</p>
                   </div>
                 </button>
               ))}
@@ -307,30 +303,30 @@ export default function Chat() {
 
         {/* Conversations */}
         <div className="flex-1 overflow-y-auto p-3">
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 px-1">Conversazioni</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-700 uppercase tracking-widest mb-2 px-1 font-bold">Conversazioni</p>
           {conversations.length === 0 ? (
-            <p className="text-xs text-gray-400 text-center py-6">Nessuna conversazione</p>
+            <p className="text-xs text-slate-400 dark:text-slate-700 text-center py-6">Nessuna conversazione</p>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {conversations.map(conv => (
                 <div
                   key={conv.id}
                   onClick={() => loadConversation(conv)}
-                  className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer group transition-all ${
+                  className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer group transition-all border border-slate-200 dark:border-white/10 ${
                     currentConvId === conv.id
-                      ? 'bg-primary-50 dark:bg-primary-900/30'
-                      : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'bg-violet-100 dark:bg-violet-500/15'
+                      : 'hover:bg-slate-100 dark:hover:bg-white/5'
                   }`}
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <MessageSquare size={13} className="text-gray-400 flex-shrink-0" />
-                    <p className="text-xs truncate text-gray-700 dark:text-gray-300">{conv.title}</p>
+                    <MessageSquare size={12} className="text-slate-700 flex-shrink-0" />
+                    <p className="text-xs truncate text-slate-600 dark:text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-300 transition-colors">{conv.title}</p>
                   </div>
                   <button
                     onClick={(e) => deleteConv(conv.id, e)}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-opacity flex-shrink-0"
+                    className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-500/10 rounded transition-all flex-shrink-0"
                   >
-                    <Trash2 size={12} />
+                    <Trash2 size={11} />
                   </button>
                 </div>
               ))}
@@ -344,22 +340,22 @@ export default function Chat() {
         {selectedAgent ? (
           <>
             {/* Header */}
-            <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center gap-3 flex-shrink-0">
-              <span className="text-2xl">{selectedAgent.avatar_emoji}</span>
+            <div className="px-5 py-3 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#0c0e1a] flex items-center gap-3 flex-shrink-0">
+              <span className="text-xl">{selectedAgent.avatar_emoji}</span>
               <div>
-                <p className="font-semibold">{selectedAgent.name}</p>
-                <p className="text-xs text-gray-400">{selectedAgent.description}</p>
+                <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{selectedAgent.name}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{selectedAgent.description}</p>
               </div>
               {loading && (
-                <div className="ml-auto flex items-center gap-1.5 text-xs text-primary-500">
-                  <Loader2 size={13} className="animate-spin" />
+                <div className="ml-auto flex items-center gap-1.5 text-xs text-violet-400">
+                  <Loader2 size={12} className="animate-spin" />
                   <span>Elaborazione...</span>
                 </div>
               )}
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
               {messages.map((msg, i) => (
                 <Message key={msg.id || i} msg={msg} />
               ))}
@@ -367,16 +363,16 @@ export default function Chat() {
             </div>
 
             {/* Input */}
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex-shrink-0">
+            <div className="px-5 py-4 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#0c0e1a] flex-shrink-0">
               <form onSubmit={sendMessage} className="flex gap-3 max-w-4xl mx-auto">
                 <textarea
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Scrivi un messaggio... (Invio per inviare, Shift+Invio per andare a capo)"
+                  placeholder="Scrivi un messaggio... (Invio per inviare)"
                   rows={1}
-                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none transition text-sm"
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/8 focus:border-violet-500/50 text-slate-200 text-sm placeholder:text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 resize-none transition-all"
                   disabled={loading}
                   maxLength={2000}
                   style={{ minHeight: '48px', maxHeight: '120px' }}
@@ -384,24 +380,24 @@ export default function Chat() {
                 <button
                   type="submit"
                   disabled={loading || !input.trim()}
-                  className="px-5 py-3 bg-primary-500 text-white rounded-xl hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-2 font-medium shadow-sm flex-shrink-0"
+                  className="px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-2 font-medium shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 flex-shrink-0"
                 >
-                  {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 </button>
               </form>
-              <p className="text-xs text-gray-400 text-right mt-1 max-w-4xl mx-auto">
+              <p className="text-[10px] text-slate-700 text-right mt-1 max-w-4xl mx-auto">
                 {input.length} / 2000
               </p>
             </div>
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <div className="text-center max-w-sm px-4">
-              <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-primary-100 to-purple-100 dark:from-primary-900/30 dark:to-purple-900/30 flex items-center justify-center">
-                <MessageSquare className="w-10 h-10 text-primary-500" />
+            <div className="text-center max-w-xs px-4">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+                <MessageSquare className="w-8 h-8 text-violet-400" />
               </div>
-              <h2 className="text-xl font-bold mb-2">Seleziona un Agente AI</h2>
-              <p className="text-sm text-gray-500">Scegli un agente dalla lista a sinistra per iniziare</p>
+              <h2 className="text-base font-bold text-slate-300 mb-1">Seleziona un Agente AI</h2>
+              <p className="text-xs text-slate-600">Scegli un agente dalla lista a sinistra per iniziare</p>
             </div>
           </div>
         )}

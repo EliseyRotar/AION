@@ -7,76 +7,66 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <div className="mb-8">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500 to-purple-500">
-            <SettingsIcon className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Impostazioni</h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">Personalizza la tua esperienza</p>
-          </div>
-        </div>
+      <div className="mb-7">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-0.5">Impostazioni</h1>
+        <p className="text-slate-500 dark:text-slate-500 text-sm">Personalizza la tua esperienza</p>
       </div>
 
-      <div className="max-w-2xl space-y-6">
-        
+      <div className="max-w-xl space-y-4">
+
         {/* Tema */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            {theme === 'light' ? <Sun size={20} className="text-amber-500" /> : <Moon size={20} className="text-primary-400" />}
-            Tema
-          </h3>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => theme === 'dark' && toggleTheme()}
-              className={`p-6 rounded-xl border-2 transition-all ${
-                theme === 'light' 
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' 
-                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
-              }`}
-            >
-              <Sun size={32} className={`mx-auto mb-2 ${theme === 'light' ? 'text-primary-500' : 'text-slate-400'}`} />
-              <p className={`font-semibold ${theme === 'light' ? 'text-primary-600' : 'text-slate-500'}`}>Chiaro</p>
-            </button>
-            
-            <button
-              onClick={() => theme === 'light' && toggleTheme()}
-              className={`p-6 rounded-xl border-2 transition-all ${
-                theme === 'dark' 
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' 
-                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
-              }`}
-            >
-              <Moon size={32} className={`mx-auto mb-2 ${theme === 'dark' ? 'text-primary-400' : 'text-slate-400'}`} />
-              <p className={`font-semibold ${theme === 'dark' ? 'text-primary-400' : 'text-slate-500'}`}>Scuro</p>
-            </button>
+        <div className="bg-white dark:bg-[#13162a] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            {theme === 'light' ? <Sun size={16} className="text-amber-500" /> : <Moon size={16} className="text-violet-400" />}
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Tema</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Chiaro', value: 'light', icon: Sun, activeColor: 'text-amber-500' },
+              { label: 'Scuro', value: 'dark', icon: Moon, activeColor: 'text-violet-400' },
+            ].map(({ label, value, icon: Icon, activeColor }) => (
+              <button
+                key={value}
+                onClick={() => theme !== value && toggleTheme()}
+                className={`p-5 rounded-xl border-2 transition-all ${
+                  theme === value
+                    ? 'border-violet-500/50 bg-violet-50 dark:bg-violet-500/10'
+                    : 'border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/3 hover:border-slate-300 dark:hover:border-white/10'
+                }`}
+              >
+                <Icon size={28} className={`mx-auto mb-2 ${theme === value ? activeColor : 'text-slate-400 dark:text-slate-600'}`} />
+                <p className={`text-sm font-semibold ${theme === value ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-600'}`}>{label}</p>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Info Sistema */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <Shield size={20} className="text-primary-500" />
-            Sistema
-          </h3>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-              <span className="text-slate-600 dark:text-slate-400">Versione</span>
-              <span className="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm font-medium">v1.0.0</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-              <span className="text-slate-600 dark:text-slate-400">Stato API</span>
-              <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-sm font-medium">Online</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-              <span className="text-slate-600 dark:text-slate-400">LLM Provider</span>
-              <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-sm font-medium">Groq</span>
-            </div>
+        {/* Sistema */}
+        <div className="bg-white dark:bg-[#13162a] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Shield size={16} className="text-cyan-500 dark:text-cyan-400" />
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Sistema</h3>
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: 'Versione', value: 'v2.0.0', badge: 'primary' },
+              { label: 'Stato API', value: 'Online', badge: 'success' },
+              { label: 'LLM Provider', value: 'Groq', badge: 'success' },
+              { label: 'RAG Engine', value: 'FAISS', badge: 'cyan' },
+            ].map(({ label, value, badge }) => (
+              <div key={label} className="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-[#11131d] rounded-xl border border-slate-200 dark:border-white/5">
+                <span className="text-sm text-slate-600 dark:text-slate-400">{label}</span>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                  badge === 'success' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' :
+                  badge === 'primary' ? 'bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-500/20' :
+                  badge === 'cyan' ? 'bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-200 dark:border-cyan-500/20' :
+                  'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10'
+                }`}>{value}</span>
+              </div>
+            ))}
           </div>
         </div>
+
       </div>
     </DashboardLayout>
   );

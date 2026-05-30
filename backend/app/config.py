@@ -1,9 +1,11 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from typing import Optional
 import os
 
-# Resolve .env path relative to this file so it works from any CWD
 _ENV_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
+
+_DEFAULT_SECRET = "your-super-secret-key-change-in-production-2024"
 
 
 class Settings(BaseSettings):
@@ -11,9 +13,12 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite+aiosqlite:///./ai_hub.db"
 
     # ── Security ──────────────────────────────────────────────
-    SECRET_KEY: str = "your-super-secret-key-change-in-production-2024"
+    SECRET_KEY: str = _DEFAULT_SECRET
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
+
+    # ── CORS ──────────────────────────────────────────────────
+    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     # ── Groq ──────────────────────────────────────────────────
     GROQ_API_KEY: str = ""
@@ -52,7 +57,17 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = 50
     MAX_MESSAGE_LENGTH: int = 2000
     MAX_CONVERSATIONS_PER_USER: int = 100
-    CHAT_HISTORY_TURNS: int = 10  # pairs of user/assistant messages to include
+    CHAT_HISTORY_TURNS: int = 10
+
+    @field_validator('DATABASE_URL', mode='before')
+    @classmethod
+    def _fix_db_url(cls, v: str) -> str:
+        """Convert plain postgres:// and postgresql:// URLs to asyncpg dialect."""
+        if v.startswith('postgres://'):
+            return v.replace('postgres://', 'postgresql+asyncpg://', 1)
+        if v.startswith('postgresql://') and '+asyncpg' not in v:
+            return v.replace('postgresql://', 'postgresql+asyncpg://', 1)
+        return v
 
     class Config:
         env_file = _ENV_FILE
@@ -65,11 +80,14 @@ settings = Settings()
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 os.makedirs(settings.VECTOR_STORE_DIR, exist_ok=True)
 
+if settings.SECRET_KEY == _DEFAULT_SECRET:
+    print("⚠️  WARNING: Using default SECRET_KEY — set a strong random key in production!")
+
 if settings.FEATURE_ADVANCED_LOGGING:
     print(f"\n{'═'*60}")
-    print(f"⚙️  AI HUB CONFIG")
+    print(f"⚙️  AION CONFIG")
     print(f"{'═'*60}")
-    print(f"🗄️  Database: {settings.DATABASE_URL}")
+    print(f"🗄️  Database: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else settings.DATABASE_URL}")
     print(f"🤖 Groq model: {settings.DEFAULT_MODEL}")
     print(f"🔑 API key: {'✅ set' if settings.GROQ_API_KEY else '❌ MISSING - set GROQ_API_KEY in .env'}")
     print(f"📏 Chunk: {settings.RAG_CHUNK_SIZE} / overlap: {settings.RAG_CHUNK_OVERLAP}")

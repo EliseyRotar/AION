@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Table, JSON, Enum as SQLEnum, Date, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Float, ForeignKey, Table, JSON, Enum as SQLEnum, Date, UniqueConstraint
 from sqlalchemy.orm import relationship
-from datetime import datetime, date
 from app.database import Base
+from app.utils import utcnow
 import enum
 
 user_groups = Table('user_groups', Base.metadata,
@@ -33,8 +33,8 @@ class User(Base):
     role = Column(SQLEnum(UserRole), default=UserRole.USER)
     is_active = Column(Boolean, default=True)
     avatar_color = Column(String(7), default="#6366f1")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
+    created_at = Column(DateTime, default=utcnow)
+
     groups = relationship("Group", secondary=user_groups, back_populates="users")
     agents = relationship("Agent", secondary=user_agents, back_populates="users")
     conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
@@ -45,8 +45,8 @@ class Group(Base):
     name = Column(String(100), unique=True, nullable=False)
     description = Column(Text)
     color = Column(String(7), default="#10b981")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
+    created_at = Column(DateTime, default=utcnow)
+
     users = relationship("User", secondary=user_groups, back_populates="groups")
     agents = relationship("Agent", secondary=group_agents, back_populates="groups")
 
@@ -58,15 +58,15 @@ class Agent(Base):
     system_prompt = Column(Text, nullable=False)
     welcome_message = Column(Text, default="Ciao! Come posso aiutarti?")
     base_model = Column(String(100), default="llama-3.3-70b-versatile")
-    temperature = Column(String(10), default="0.7")
+    temperature = Column(Float, default=0.7)  # was String(10) — fix #4
     max_tokens = Column(Integer, default=2048)
     avatar_emoji = Column(String(10), default="🤖")
     primary_color = Column(String(7), default="#6366f1")
     fallback_to_general = Column(Boolean, default=True)
     is_active = Column(Boolean, default=True)
     created_by = Column(Integer, ForeignKey('users.id'))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
+    created_at = Column(DateTime, default=utcnow)
+
     groups = relationship("Group", secondary=group_agents, back_populates="agents")
     users = relationship("User", secondary=user_agents, back_populates="agents")
     documents = relationship("Document", back_populates="agent", cascade="all, delete-orphan")
@@ -82,8 +82,8 @@ class Document(Base):
     file_size = Column(Integer)
     chunk_count = Column(Integer, default=0)
     status = Column(String(50), default="processing")
-    uploaded_at = Column(DateTime, default=datetime.utcnow)
-    
+    uploaded_at = Column(DateTime, default=utcnow)
+
     agent = relationship("Agent", back_populates="documents")
 
 class Conversation(Base):
@@ -92,9 +92,9 @@ class Conversation(Base):
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     agent_id = Column(Integer, ForeignKey('agents.id', ondelete='CASCADE'))
     title = Column(String(255), default="Nuova conversazione")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
     user = relationship("User", back_populates="conversations")
     agent = relationship("Agent", back_populates="conversations")
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
@@ -110,20 +110,20 @@ class Message(Base):
     feedback = Column(String(4))  # 'up', 'down', NULL
     feedback_user_id = Column(Integer, ForeignKey('users.id'))
     token_count = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
+    created_at = Column(DateTime, default=utcnow)
+
     conversation = relationship("Conversation", back_populates="messages")
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
     id = Column(Integer, primary_key=True, index=True)
     actor_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
-    action = Column(String(50), nullable=False)  # 'create', 'update', 'delete', 'upload', 'bulk_action'
-    entity_type = Column(String(50), nullable=False)  # 'user', 'agent', 'group', 'document'
+    action = Column(String(50), nullable=False)
+    entity_type = Column(String(50), nullable=False)
     entity_id = Column(Integer)
     detail = Column(JSON)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    
+    created_at = Column(DateTime, default=utcnow, index=True)
+
     actor = relationship("User", foreign_keys=[actor_id])
 
 class UsageStat(Base):
@@ -134,16 +134,16 @@ class UsageStat(Base):
     date = Column(Date, nullable=False, index=True)
     message_count = Column(Integer, default=0)
     token_count = Column(Integer, default=0)
-    
+
     __table_args__ = (UniqueConstraint('agent_id', 'user_id', 'date', name='uq_usage_stats_agent_user_date'),)
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
     id = Column(Integer, primary_key=True, index=True)
-    token_hash = Column(String(64), unique=True, nullable=False)  # SHA-256 hex
+    token_hash = Column(String(64), unique=True, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     expires_at = Column(DateTime, nullable=False)
     revoked = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
+    created_at = Column(DateTime, default=utcnow)
+
     user = relationship("User")

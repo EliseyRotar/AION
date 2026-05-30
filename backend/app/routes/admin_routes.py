@@ -36,7 +36,7 @@ class GroupCreate(BaseModel):
     color: str = "#10b981"
     user_ids: List[int] = []
 
-class GroupUpdate(BaseModel):  # <-- AGGIUNTO
+class GroupUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     color: Optional[str] = None
@@ -68,31 +68,26 @@ async def create_user(data: UserCreate, db: AsyncSession = Depends(get_db), admi
     existing = await db.execute(select(User).where(User.email == data.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email già in uso")
-    
+
     user = User(
         email=data.email, username=data.username, full_name=data.full_name,
         hashed_password=get_password_hash(data.password),
         role=UserRole.ADMIN if data.role == "admin" else UserRole.USER,
         avatar_color=random.choice(AVATAR_COLORS)
     )
-    
+
     if data.group_ids:
         result = await db.execute(select(Group).where(Group.id.in_(data.group_ids)))
         user.groups = list(result.scalars().all())
-    
+
     db.add(user)
-    await db.flush()  # Get the user ID before audit log
-    
-    # Audit log
+    await db.flush()
+
     await create_audit_log(
-        db=db,
-        actor_id=admin.id,
-        action="create",
-        entity_type="user",
-        entity_id=user.id,
+        db=db, actor_id=admin.id, action="create", entity_type="user", entity_id=user.id,
         detail={"email": user.email, "username": user.username, "role": user.role.value}
     )
-    
+
     await db.commit()
     return {"message": "Utente creato", "id": user.id}
 
@@ -102,8 +97,7 @@ async def update_user(user_id: int, data: UserUpdate, db: AsyncSession = Depends
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="Utente non trovato")
-    
-    # Track changes for audit log
+
     changes = {}
     if data.email and data.email != user.email:
         changes["email"] = {"old": user.email, "new": data.email}
@@ -124,17 +118,12 @@ async def update_user(user_id: int, data: UserUpdate, db: AsyncSession = Depends
         result = await db.execute(select(Group).where(Group.id.in_(data.group_ids)))
         user.groups = list(result.scalars().all())
         changes["groups"] = "updated"
-    
-    # Audit log
+
     await create_audit_log(
-        db=db,
-        actor_id=admin.id,
-        action="update",
-        entity_type="user",
-        entity_id=user.id,
-        detail={"changes": changes}
+        db=db, actor_id=admin.id, action="update", entity_type="user",
+        entity_id=user.id, detail={"changes": changes}
     )
-    
+
     await db.commit()
     return {"message": "Utente aggiornato"}
 
@@ -146,22 +135,15 @@ async def delete_user(user_id: int, db: AsyncSession = Depends(get_db), admin: U
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="Utente non trovato")
-    
-    # Capture user info before deletion
+
     user_info = {"email": user.email, "username": user.username, "role": user.role.value}
-    
     await db.delete(user)
-    
-    # Audit log
+
     await create_audit_log(
-        db=db,
-        actor_id=admin.id,
-        action="delete",
-        entity_type="user",
-        entity_id=user_id,
-        detail=user_info
+        db=db, actor_id=admin.id, action="delete", entity_type="user",
+        entity_id=user_id, detail=user_info
     )
-    
+
     await db.commit()
     return {"message": "Utente eliminato"}
 
@@ -181,37 +163,25 @@ async def create_group(data: GroupCreate, db: AsyncSession = Depends(get_db), ad
         result = await db.execute(select(User).where(User.id.in_(data.user_ids)))
         group.users = list(result.scalars().all())
     db.add(group)
-    await db.flush()  # Get the group ID before audit log
-    
-    # Audit log
+    await db.flush()
+
     await create_audit_log(
-        db=db,
-        actor_id=admin.id,
-        action="create",
-        entity_type="group",
-        entity_id=group.id,
+        db=db, actor_id=admin.id, action="create", entity_type="group", entity_id=group.id,
         detail={"name": group.name, "description": group.description, "color": group.color}
     )
-    
+
     await db.commit()
     return {"message": "Gruppo creato", "id": group.id}
 
-# 🔧 AGGIUNTO: Route UPDATE gruppo
 @router.put("/groups/{group_id}")
-async def update_group(
-    group_id: int, 
-    data: GroupUpdate, 
-    db: AsyncSession = Depends(get_db), 
-    admin: User = Depends(get_current_admin)
-):
+async def update_group(group_id: int, data: GroupUpdate, db: AsyncSession = Depends(get_db), admin: User = Depends(get_current_admin)):
     result = await db.execute(
         select(Group).options(selectinload(Group.users)).where(Group.id == group_id)
     )
     group = result.scalar_one_or_none()
     if not group:
         raise HTTPException(status_code=404, detail="Gruppo non trovato")
-    
-    # Track changes for audit log
+
     changes = {}
     if data.name is not None and data.name != group.name:
         changes["name"] = {"old": group.name, "new": data.name}
@@ -222,23 +192,16 @@ async def update_group(
     if data.color is not None and data.color != group.color:
         changes["color"] = {"old": group.color, "new": data.color}
         group.color = data.color
-    
-    # Aggiorna utenti
     if data.user_ids is not None:
         result = await db.execute(select(User).where(User.id.in_(data.user_ids)))
         group.users = list(result.scalars().all())
         changes["users"] = "updated"
-    
-    # Audit log
+
     await create_audit_log(
-        db=db,
-        actor_id=admin.id,
-        action="update",
-        entity_type="group",
-        entity_id=group.id,
-        detail={"changes": changes}
+        db=db, actor_id=admin.id, action="update", entity_type="group",
+        entity_id=group.id, detail={"changes": changes}
     )
-    
+
     await db.commit()
     return {"message": "Gruppo aggiornato"}
 
@@ -248,24 +211,29 @@ async def delete_group(group_id: int, db: AsyncSession = Depends(get_db), admin:
     group = result.scalar_one_or_none()
     if not group:
         raise HTTPException(status_code=404, detail="Gruppo non trovato")
-    
-    # Capture group info before deletion
+
     group_info = {"name": group.name, "description": group.description, "color": group.color}
-    
     await db.delete(group)
-    
-    # Audit log
+
     await create_audit_log(
-        db=db,
-        actor_id=admin.id,
-        action="delete",
-        entity_type="group",
-        entity_id=group_id,
-        detail=group_info
+        db=db, actor_id=admin.id, action="delete", entity_type="group",
+        entity_id=group_id, detail=group_info
     )
-    
+
     await db.commit()
     return {"message": "Gruppo eliminato"}
+
+
+def _apply_audit_filters(query, actor_id, entity_type, action):
+    """Apply common WHERE filters to an audit log query."""
+    if actor_id is not None:
+        query = query.where(AuditLog.actor_id == actor_id)
+    if entity_type is not None:
+        query = query.where(AuditLog.entity_type == entity_type)
+    if action is not None:
+        query = query.where(AuditLog.action == action)
+    return query
+
 
 @router.get("/audit-logs")
 async def get_audit_logs(
@@ -277,82 +245,44 @@ async def get_audit_logs(
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_current_admin)
 ):
-    """
-    Get audit logs with pagination and filters.
-    
-    Parameters:
-    - page: Page number (1-indexed)
-    - page_size: Number of items per page (default 50, max 100)
-    - actor_id: Filter by user who performed the action
-    - entity_type: Filter by entity type (user, agent, group, document)
-    - action: Filter by action type (create, update, delete, upload, bulk_action)
-    
-    Returns:
-    - items: List of audit log entries
-    - total: Total number of matching records
-    - page: Current page number
-    - page_size: Items per page
-    - total_pages: Total number of pages
-    
-    Requirements: 1.5, 1.6
-    """
-    # Validate and cap page_size
-    if page_size > 100:
-        page_size = 100
-    if page_size < 1:
-        page_size = 1
-    if page < 1:
-        page = 1
-    
-    # Build query with filters
-    query = select(AuditLog).options(selectinload(AuditLog.actor))
-    
-    if actor_id is not None:
-        query = query.where(AuditLog.actor_id == actor_id)
-    if entity_type is not None:
-        query = query.where(AuditLog.entity_type == entity_type)
-    if action is not None:
-        query = query.where(AuditLog.action == action)
-    
-    # Get total count
-    count_query = select(func.count()).select_from(AuditLog)
-    if actor_id is not None:
-        count_query = count_query.where(AuditLog.actor_id == actor_id)
-    if entity_type is not None:
-        count_query = count_query.where(AuditLog.entity_type == entity_type)
-    if action is not None:
-        count_query = count_query.where(AuditLog.action == action)
-    
-    total = await db.scalar(count_query) or 0
-    
-    # Calculate pagination
-    total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+    page_size = max(1, min(100, page_size))
+    page = max(1, page)
+
+    base_query = select(AuditLog)
+    base_query = _apply_audit_filters(base_query, actor_id, entity_type, action)
+
+    total = await db.scalar(
+        _apply_audit_filters(select(func.count()).select_from(AuditLog), actor_id, entity_type, action)
+    ) or 0
+
+    total_pages = max(1, (total + page_size - 1) // page_size)
     offset = (page - 1) * page_size
-    
-    # Get paginated results, ordered by most recent first
-    query = query.order_by(AuditLog.timestamp.desc()).offset(offset).limit(page_size)
-    result = await db.execute(query)
+
+    # Fix #1: was AuditLog.timestamp (doesn't exist) — correct column is created_at
+    result = await db.execute(
+        base_query.options(selectinload(AuditLog.actor))
+        .order_by(AuditLog.created_at.desc())
+        .offset(offset)
+        .limit(page_size)
+    )
     logs = result.scalars().all()
-    
-    # Format response
-    items = []
-    for log in logs:
-        item = {
-            "id": log.id,
-            "timestamp": log.timestamp.isoformat(),
-            "actor_id": log.actor_id,
-            "actor_username": log.actor.username if log.actor else None,
-            "action": log.action,
-            "entity_type": log.entity_type,
-            "entity_id": log.entity_id,
-            "detail": log.detail
-        }
-        items.append(item)
-    
+
     return {
-        "items": items,
+        "items": [
+            {
+                "id": log.id,
+                "timestamp": log.created_at.isoformat(),
+                "actor_id": log.actor_id,
+                "actor_username": log.actor.username if log.actor else None,
+                "action": log.action,
+                "entity_type": log.entity_type,
+                "entity_id": log.entity_id,
+                "detail": log.detail,
+            }
+            for log in logs
+        ],
         "total": total,
         "page": page,
         "page_size": page_size,
-        "total_pages": total_pages
+        "total_pages": total_pages,
     }

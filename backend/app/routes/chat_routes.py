@@ -6,7 +6,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from pydantic import BaseModel, Field
 from typing import Optional, AsyncIterator
-from datetime import datetime
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -15,6 +14,7 @@ from app.models import User, Agent, Conversation, Message
 from app.auth import get_current_user
 from app.rag_engine import rag_engine, groq_client, RelevanceLevel
 from app.config import settings
+from app.utils import utcnow
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 limiter = Limiter(key_func=get_remote_address)
@@ -281,8 +281,8 @@ async def send_message_stream(
                 prompt=prompt,
                 model=agent.base_model,
                 system=agent.system_prompt,
-                temperature=float(agent.temperature),
-                max_tokens=int(agent.max_tokens) if agent.max_tokens else 2048,
+                temperature=agent.temperature,
+                max_tokens=agent.max_tokens or 2048,
                 history=history,
             ):
                 full_text += chunk
@@ -311,7 +311,7 @@ async def send_message_stream(
             )
             c = result2.scalar_one_or_none()
             if c:
-                c.updated_at = datetime.utcnow()
+                c.updated_at = utcnow()
             await save_db.commit()
             await save_db.refresh(assistant_msg)
 
@@ -369,8 +369,8 @@ async def send_message(
             prompt=prompt,
             model=agent.base_model,
             system=agent.system_prompt,
-            temperature=float(agent.temperature),
-            max_tokens=int(agent.max_tokens) if agent.max_tokens else 2048,
+            temperature=agent.temperature,
+            max_tokens=agent.max_tokens or 2048,
             history=history,
         )
     except Exception as e:
@@ -383,7 +383,7 @@ async def send_message(
         content=response_text, sources=sources_json, from_documents=from_documents,
     )
     db.add(assistant_msg)
-    conv.updated_at = datetime.utcnow()
+    conv.updated_at = utcnow()
     await db.commit()
     await db.refresh(assistant_msg)
 

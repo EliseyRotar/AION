@@ -2,7 +2,7 @@ import os
 import re
 import json
 from typing import List, Tuple, Dict, Optional, AsyncIterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import httpx
 from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader
@@ -44,8 +44,6 @@ class SearchAnalysis:
 
 
 class RAGEngine:
-    THRESHOLDS = {'very_high': 9.0, 'high': 14.0, 'medium': 18.0, 'low': 21.0}
-
     SKIP_RAG_PATTERNS = [
         r'^(ciao|salve|buongiorno|buonasera|hey|hi|hello)[\s!?.]*$',
         r'^(grazie|thanks|ok|va bene|perfetto|bene)[\s!?.]*$',
@@ -55,6 +53,13 @@ class RAGEngine:
     ]
 
     def __init__(self):
+        # Thresholds from settings so .env changes take effect — fix #2
+        self.thresholds = {
+            'very_high': settings.RAG_THRESHOLD_VERY_HIGH,
+            'high':      settings.RAG_THRESHOLD_HIGH,
+            'medium':    settings.RAG_THRESHOLD_MEDIUM,
+            'low':       settings.RAG_THRESHOLD_LOW,
+        }
         self.embeddings = HuggingFaceEmbeddings(
             model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
             model_kwargs={'device': 'cpu'},
@@ -65,6 +70,8 @@ class RAGEngine:
             separators=["\n\n", "\n", ". ", "! ", "? ", "; ", ", ", " ", ""],
             length_function=len,
         )
+        # In-memory cache: agent_id → FAISS instance — fix #10
+        self._vs_cache: Dict[int, FAISS] = {}
         print(f"🔧 RAG Engine ready | chunk={settings.RAG_CHUNK_SIZE} overlap={settings.RAG_CHUNK_OVERLAP}")
 
     def _should_skip_rag(self, query: str) -> bool:
@@ -76,6 +83,20 @@ class RAGEngine:
 
     def get_vector_store_path(self, agent_id: int) -> str:
         return os.path.join(settings.VECTOR_STORE_DIR, f"agent_{agent_id}")
+
+    def _load_vs(self, agent_id: int) -> Optional[FAISS]:
+        """Load vector store from cache or disk."""
+        if agent_id in self._vs_cache:
+            return self._vs_cache[agent_id]
+        path = self.get_vector_store_path(agent_id)
+        if not os.path.exists(path):
+            return None
+        vs = FAISS.load_local(path, self.embeddings, allow_dangerous_deserialization=True)
+        self._vs_cache[agent_id] = vs
+        return vs
+
+    def _invalidate_cache(self, agent_id: int) -> None:
+        self._vs_cache.pop(agent_id, None)
 
     async def process_document(self, file_path: str, agent_id: int, filename: str) -> Dict:
         ext = os.path.splitext(file_path)[1].lower()
@@ -109,6 +130,9 @@ class RAGEngine:
             vs.save_local(path)
             mode = "created"
 
+        # Refresh cache with updated store
+        self._vs_cache[agent_id] = vs
+
         print(f"✅ Vector store {mode}: {filename} | {len(chunks)} chunks | {total_chars:,} chars")
         return {
             'filename': filename, 'chunks': len(chunks),
@@ -119,30 +143,30 @@ class RAGEngine:
 
     def _get_relevance_level(self, score: float) -> RelevanceLevel:
         score = float(score)
-        if score < self.THRESHOLDS['very_high']: return RelevanceLevel.VERY_HIGH
-        if score < self.THRESHOLDS['high']:      return RelevanceLevel.HIGH
-        if score < self.THRESHOLDS['medium']:    return RelevanceLevel.MEDIUM
-        if score < self.THRESHOLDS['low']:       return RelevanceLevel.LOW
+        if score < self.thresholds['very_high']: return RelevanceLevel.VERY_HIGH
+        if score < self.thresholds['high']:      return RelevanceLevel.HIGH
+        if score < self.thresholds['medium']:    return RelevanceLevel.MEDIUM
+        if score < self.thresholds['low']:       return RelevanceLevel.LOW
         return RelevanceLevel.NONE
 
     def _calculate_confidence(self, score: float, relevance: RelevanceLevel) -> float:
         score = float(score)
-        if relevance == RelevanceLevel.VERY_HIGH: return max(90.0, 100 - (score / 9.0) * 10)
-        if relevance == RelevanceLevel.HIGH:      return max(75.0, 90 - ((score - 9.0) / 5.0) * 15)
-        if relevance == RelevanceLevel.MEDIUM:    return max(50.0, 75 - ((score - 14.0) / 4.0) * 25)
-        if relevance == RelevanceLevel.LOW:       return max(25.0, 50 - ((score - 18.0) / 3.0) * 25)
-        return max(0.0, 25 - ((score - 21.0) / 5.0) * 25)
+        t = self.thresholds
+        if relevance == RelevanceLevel.VERY_HIGH: return max(90.0, 100 - (score / t['very_high']) * 10)
+        if relevance == RelevanceLevel.HIGH:      return max(75.0, 90 - ((score - t['very_high']) / (t['high'] - t['very_high'])) * 15)
+        if relevance == RelevanceLevel.MEDIUM:    return max(50.0, 75 - ((score - t['high']) / (t['medium'] - t['high'])) * 25)
+        if relevance == RelevanceLevel.LOW:       return max(25.0, 50 - ((score - t['medium']) / (t['low'] - t['medium'])) * 25)
+        return max(0.0, 25 - ((score - t['low']) / 5.0) * 25)
 
     async def search_documents(self, agent_id: int, query: str, k: int = 6) -> SearchAnalysis:
         if self._should_skip_rag(query):
             return SearchAnalysis([], False, 999.0, {}, "skip_simple_query", 0.0)
 
-        path = self.get_vector_store_path(agent_id)
-        if not os.path.exists(path):
-            return SearchAnalysis([], False, 999.0, {}, "no_documents", 0.0)
-
         try:
-            vs = FAISS.load_local(path, self.embeddings, allow_dangerous_deserialization=True)
+            vs = self._load_vs(agent_id)
+            if vs is None:
+                return SearchAnalysis([], False, 999.0, {}, "no_documents", 0.0)
+
             raw = vs.similarity_search_with_score(query, k=k)
 
             results: List[SearchResult] = []
@@ -187,14 +211,12 @@ class RAGEngine:
             return ("document_based", True, float(sum(r.confidence for r in top[:3]) / min(3, len(top))))
         if m >= 2 or (h >= 1 and m >= 1):
             return ("hybrid", True, float(sum(r.confidence for r in results[:3]) / 3))
-        if results[0].score < self.THRESHOLDS['medium']:
+        if results[0].score < self.thresholds['medium']:
             return ("cautious_hybrid", True, float(results[0].confidence))
         return ("general_fallback", False, 0.0)
 
 
 class GroqClient:
-    """Groq LLM client — supports both regular and streaming responses."""
-
     def __init__(self):
         self.api_key  = settings.GROQ_API_KEY
         self.base_url = settings.GROQ_BASE_URL
@@ -210,11 +232,9 @@ class GroqClient:
         system: Optional[str] = None,
         history: Optional[List[Dict]] = None,
     ) -> List[Dict]:
-        """Build the messages array with optional system prompt and conversation history."""
         messages = []
         if system:
             messages.append({"role": "system", "content": system})
-        # Inject last N turns of history (keep context window manageable)
         if history:
             for msg in history[-settings.CHAT_HISTORY_TURNS * 2:]:
                 messages.append({"role": msg["role"], "content": msg["content"]})
@@ -275,7 +295,6 @@ class GroqClient:
         max_tokens: int = 2048,
         history: Optional[List[Dict]] = None,
     ) -> AsyncIterator[str]:
-        """Yield text chunks as they arrive from Groq SSE stream."""
         model = model or settings.DEFAULT_MODEL
         payload = {
             "model": model,
@@ -331,7 +350,5 @@ class GroqClient:
             ]
 
 
-# Singletons
-rag_engine   = RAGEngine()
-groq_client  = GroqClient()
-ollama_client = groq_client  # backward-compat alias
+rag_engine  = RAGEngine()
+groq_client = GroqClient()

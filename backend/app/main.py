@@ -11,14 +11,12 @@ from app.models import User, UserRole
 from app.auth import get_password_hash
 from app.config import settings
 from sqlalchemy import select
-import secrets
 
-# Rate limiter — keyed by IP
 limiter = Limiter(key_func=get_remote_address)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("🚀 Starting AI Hub Enterprise...")
+    print("🚀 Starting AION...")
     await init_db()
     async with async_session_maker() as db:
         result = await db.execute(select(User).where(User.email == settings.DEFAULT_ADMIN_EMAIL))
@@ -38,15 +36,15 @@ async def lifespan(app: FastAPI):
     yield
     print("👋 Server stopped")
 
-app = FastAPI(title="AI Hub Enterprise", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="AION", version="2.0.0", lifespan=lifespan)
 
-# Rate limiting
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(',') if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -56,4 +54,4 @@ app.include_router(api_router, prefix="/api")
 
 @app.get("/")
 async def root():
-    return {"name": "AI Hub Enterprise", "status": "running", "version": "1.0.0"}
+    return {"name": "AION", "status": "running", "version": "2.0.0"}

@@ -7,10 +7,7 @@ from enum import Enum
 import httpx
 from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-try:
-    from langchain_huggingface import HuggingFaceEmbeddings
-except ImportError:
-    from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain_community.vectorstores import FAISS
 from app.config import settings
 
@@ -60,9 +57,9 @@ class RAGEngine:
             'medium':    settings.RAG_THRESHOLD_MEDIUM,
             'low':       settings.RAG_THRESHOLD_LOW,
         }
-        self.embeddings = HuggingFaceEmbeddings(
+        # FastEmbed uses ONNX — no PyTorch/CUDA needed, ~150MB RAM vs 1GB+
+        self.embeddings = FastEmbedEmbeddings(
             model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-            model_kwargs={'device': 'cpu'},
         )
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=settings.RAG_CHUNK_SIZE,
